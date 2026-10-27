@@ -12,7 +12,13 @@
  * 3) operadoras: o "id" é o nome em minúsculas. O logo fica em assets/logos.
  */
 window.APP_CONFIG = {
-  firebase: null,
+  firebase: {
+  apiKey: "AIzaSyBnRKBnSrA6i9ObUlagk9gn-YBimp_6ah0",
+  authDomain: "controle-chips-remotas.firebaseapp.com",
+  projectId: "controle-chips-remotas",
+  storageBucket: "controle-chips-remotas.firebasestorage.app",
+  messagingSenderId: "986523903623",
+  appId: "1:986523903623:web:358056f3d0bef58b457a22"},
   /* Exemplo de como fica preenchido:
   firebase: {
     apiKey: "AIzaSy...",
