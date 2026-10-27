@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Controle de Chips das Remotas</title>
+<meta name="description" content="Controle dos chips das remotas de telemetria: estoque, equipes, instalações, remanejamentos e relatórios.">
+<meta name="theme-color" content="#000464">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="assets/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chips Remotas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<script src="js/config.js"></script>
+<script src="vendor/chart.umd.min.js" defer></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+<div class="boot" id="boot">Carregando…</div>
+
+<!-- ============ LOGIN ============ -->
+<div class="auth" id="telaLogin" hidden>
+  <div class="band"><div class="wrap bandin"><img class="logo" src="assets/logos/equatorial.png" alt="Equatorial Energia" width="240" height="64"><span class="bandtag" data-cfg="setor"></span></div></div>
+  <div class="authwrap">
+    <form class="authcard" id="fLogin" novalidate>
+      <div><small class="muted" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600" data-cfg="area"></small>
+      <h1 data-cfg="titulo"></h1></div>
+      <p id="authIntro">Entre com seu e-mail e senha.</p>
+      <label class="f" id="lbNome" hidden>Nome completo<input id="aNome" autocomplete="name"></label>
+      <label class="f">E-mail<input id="aEmail" type="email" autocomplete="username" inputmode="email" required></label>
+      <label class="f" id="lbSenha">Senha<input id="aSenha" type="password" autocomplete="current-password" required minlength="6"></label>
+      <div class="autherr" id="authErr" hidden></div>
+      <div class="authok" id="authOk" hidden></div>
+      <button class="btn primary" type="submit" id="btnAuth">Entrar</button>
+      <div class="links">
+        <button class="linkbtn" type="button" id="lnkModo">Não tenho acesso — pedir cadastro</button>
+        <button class="linkbtn" type="button" id="lnkSenha">Esqueci a senha</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ AGUARDANDO LIBERAÇÃO ============ -->
+<div class="auth" id="telaPendente" hidden>
+  <div class="band"><div class="wrap bandin"><img class="logo" src="assets/logos/equatorial.png" alt="Equatorial Energia" width="240" height="64"><span class="bandtag" data-cfg="setor"></span></div></div>
+  <div class="authwrap">
+    <div class="authcard">
+      <h1 id="pendTitulo">Cadastro recebido</h1>
+      <p id="pendTexto">Seu acesso precisa ser liberado por um administrador. Assim que for liberado, esta tela abre o app sozinha.</p>
+      <p class="mono" id="pendEmail"></p>
+      <button class="btn" type="button" data-sair>Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+<div class="band"><div class="wrap bandin">
+  <img class="logo" src="assets/logos/equatorial.png" alt="Equatorial Energia" width="240" height="64">
+  <span class="bandtag" data-cfg="setor"></span>
+</div></div>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <small data-cfg="area"></small>
+    <h1>Controle de Chips <span>das Remotas</span></h1>
+    <div class="modebar"><i class="dot" id="modeDot"></i><span id="modeText">Conectando…</span></div>
+  </div>
+  <div class="userbox">
+    <button class="btn small" id="btnInstalar" type="button" hidden>Instalar app</button>
+    <span class="userchip" id="userChip" hidden><span class="unome" id="uNome"></span><span class="papel" id="uPapel"></span><button class="btn small" type="button" data-sair>Sair</button></span>
+    <button class="btn primary" id="btnNova" type="button">+ Nova movimentação</button>
+  </div>
+</header>
+
+<div class="filterbar" id="filterbar">
+  <div class="fgroup"><span class="flabel">Regional</span><div class="seg" id="segAll"></div><div id="segSups" style="display:contents"></div></div>
+  <div class="fgroup"><span class="flabel">Operadora</span><div class="seg" id="segOp"></div></div>
+  <div class="fgroup"><span class="flabel">Período</span>
+    <select id="perSel" aria-label="Período">
+      <option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="mes" selected>Mês atual</option>
+      <option value="mesant">Mês anterior</option><option value="90">Últimos 90 dias</option><option value="ano">Ano atual</option><option value="tudo">Todo o histórico</option><option value="custom">Escolher datas…</option>
+    </select>
+    <span id="perCustom" hidden><input type="date" id="fDe" aria-label="De"> a <input type="date" id="fAte" aria-label="Até"></span>
+  </div>
+  <div class="fsummary"><span id="fText"></span><button class="linkbtn" id="btnLimpar" type="button" hidden>Limpar filtros</button><button class="btn small fhead-btn" id="btnFiltros" type="button" aria-expanded="false">Filtros</button></div>
+</div>
+<div class="banner info" id="bannerLocal" hidden><span><b>Modo local.</b> Sem Firebase configurado: os dados ficam só neste navegador e ninguém mais vê. Siga o README para ativar o banco compartilhado.</span></div>
+<div class="demo" id="demoBar" hidden><span><b>Dados de exemplo.</b> Nada aqui é real nem fica salvo. Use para conhecer o painel.</span><button class="btn small" id="btnSairDemo" type="button">Sair do exemplo</button></div>
+<div class="ro" id="roNote" hidden>Seu acesso é de leitura. Painéis, relatórios e exportações continuam disponíveis.</div>
+
+<nav class="tabs" role="tablist" id="tabs">
+  <button role="tab" data-tab="painel" aria-selected="true" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="tl">Painel</span><span class="ts">Painel</span></button>
+  <button role="tab" data-tab="estoque" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg><span class="tl">Estoque</span><span class="ts">Estoque</span><span class="count" id="cntEst">0</span></button>
+  <button role="tab" data-tab="chips" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><rect x="8" y="11" width="8" height="7" rx="1"/><path d="M12 11v7M8 14.5h8"/></svg><span class="tl">Chips</span><span class="ts">Chips</span><span class="count" id="cntChips">0</span></button>
+  <button role="tab" data-tab="movs" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg><span class="tl">Movimentações</span><span class="ts">Movim.</span><span class="count" id="cntMovs">0</span></button>
+  <button role="tab" data-tab="rel" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tl">Relatórios</span><span class="ts">Relatórios</span></button>
+  <button role="tab" data-tab="usuarios" aria-selected="false" type="button" id="tabUsuarios" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-5.5"/></svg><span class="tl">Usuários</span><span class="ts">Usuários</span><span class="count" id="cntPend">0</span></button>
+</nav>
+
+<main>
+<!-- PAINEL -->
+<section id="tab-painel">
+  <div class="hero-empty" id="heroEmpty" hidden>
+    <h2>Nenhum chip cadastrado ainda</h2>
+    <p>Comece registrando a entrada dos chips no estoque de cada regional. Você pode colar vários ICCIDs de uma vez, copiados do Excel. Enquanto isso, veja como o painel fica com dados de exemplo.</p>
+    <div class="actions"><button class="btn primary" type="button" data-novo="entrada" data-escrita>+ Entrada no estoque</button><button class="btn" type="button" id="btnDemo">Ver painel com dados de exemplo</button></div>
+  </div>
+  <div class="sechead"><h2>Situação atual dos chips</h2><span class="muted" style="font-size:12px">Toque num indicador ou gráfico para detalhar</span></div>
+  <div class="statusbar" id="statusbar"></div>
+  <div class="grid g-2">
+    <div class="panel"><div class="phead"><h3>Distribuição por situação</h3><span class="hint">toque para listar</span></div><div class="chartbox"><canvas id="pDonut" aria-label="Distribuição dos chips por situação"></canvas><div class="nodata" hidden>Sem chips para os filtros selecionados.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Chips por regional</h3><span class="hint">toque numa regional para filtrar tudo</span></div><div class="chartbox"><canvas id="pReg" aria-label="Chips por regional e situação"></canvas><div class="nodata" hidden>Sem chips para os filtros selecionados.</div></div></div>
+  </div>
+  <div class="grid g-2b">
+    <div class="panel"><div class="phead"><h3>Movimentações no período</h3><span class="hint" id="pTimeHint"></span></div><div class="chartbox"><canvas id="pTime" aria-label="Movimentações ao longo do período"></canvas><div class="nodata" hidden>Nenhuma movimentação no período.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Chips ativos por operadora</h3><span class="hint">toque para filtrar</span></div><div class="chartbox"><canvas id="pOps" aria-label="Chips ativos por operadora"></canvas><div class="nodata" hidden>Sem chips ativos.</div></div></div>
+  </div>
+  <div class="grid g-eq">
+    <div class="panel"><div class="phead"><h3>Pendências</h3><span class="hint" id="alertHint"></span></div><div class="alerts" id="alerts"></div></div>
+    <div class="panel"><div class="phead"><h3>Últimas movimentações</h3><button class="linkbtn" type="button" data-goto="movs">Ver todas</button></div><ul class="feed" id="feed"></ul></div>
+  </div>
+</section>
+
+<!-- ESTOQUE -->
+<section id="tab-estoque" hidden>
+  <div class="sechead"><h2>Estoque físico por regional</h2><span class="muted" style="font-size:12px">Toque numa regional para ver só o estoque dela</span></div>
+  <div class="regcards" id="regCards"></div>
+  <div class="kv" id="eKv" style="margin-top:16px"></div>
+  <div class="actions" style="margin-top:14px" data-escrita>
+    <button class="btn primary" type="button" data-novo="entrada">+ Entrada no estoque</button>
+    <button class="btn" type="button" data-novo="saida">Saída para equipe</button>
+    <button class="btn" type="button" data-novo="devolucao">Devolução ao estoque</button>
+    <button class="btn" type="button" data-novo="transferencia">Transferir entre regionais</button>
+  </div>
+  <div class="grid g-eq">
+    <div class="panel"><div class="phead"><h3>Saldo por operadora</h3></div>
+      <div class="tablebox"><table class="resp"><thead><tr><th>Operadora</th><th class="r">Estoque</th><th class="r">Equipes</th><th class="r">Retirados</th><th class="r">Instalados</th></tr></thead><tbody id="tbEstOp"></tbody></table></div></div>
+    <div class="panel"><div class="phead"><h3>Chips em poder das equipes</h3><span class="hint">toque para ver os chips</span></div>
+      <div class="tablebox"><table class="resp"><thead><tr><th>Equipe</th><th>Regional</th><th class="r">Com equipe</th><th class="r">A devolver</th><th class="r">Mais antigo</th></tr></thead><tbody id="tbEstEq"></tbody></table></div></div>
+  </div>
+  <div class="sechead" style="margin-top:22px"><h2>Chips no almoxarifado</h2></div>
+  <div class="toolbar"><input type="search" id="qEst" placeholder="Buscar ICCID ou linha"></div>
+  <div class="tablebox"><table class="resp">
+    <thead><tr><th>ICCID</th><th>Linha</th><th>Operadora</th><th>Regional</th><th>APN / plano</th><th>No estoque desde</th><th class="r">Dias</th></tr></thead>
+    <tbody id="tbEst"></tbody>
+  </table></div>
+  <div class="foot" id="footEst"></div>
+</section>
+
+<!-- CHIPS -->
+<section id="tab-chips" hidden>
+  <div class="toolbar"><input type="search" id="qChips" placeholder="Buscar por ICCID, linha, UC, remota, cidade ou equipe"></div>
+  <div class="chips-filter" id="fStatus"></div>
+  <div class="tablebox"><table class="resp">
+    <thead><tr><th>ICCID</th><th>Linha</th><th>Operadora</th><th>Situação</th><th>Regional</th><th>Onde está</th><th>Desde</th></tr></thead>
+    <tbody id="tbChips"></tbody>
+  </table></div>
+  <div class="foot" id="footChips"></div>
+</section>
+
+<!-- MOVIMENTAÇÕES -->
+<section id="tab-movs" hidden>
+  <div class="toolbar">
+    <input type="search" id="qMovs" placeholder="Buscar por ICCID, UC, remota, equipe, nota de serviço…">
+    <select id="fTipoMovs" aria-label="Tipo"><option value="">Todos os tipos</option></select>
+  </div>
+  <div class="tablebox"><table class="resp">
+    <thead><tr><th>Data · Tipo</th><th>ICCID</th><th>Operadora</th><th>Regional</th><th>Local / UC</th><th>Equipe</th><th>Documento</th><th>Motivo / obs.</th></tr></thead>
+    <tbody id="tbMovs"></tbody>
+  </table></div>
+  <div class="foot" id="footMovs"></div>
+</section>
+
+<!-- RELATÓRIOS -->
+<section id="tab-rel" hidden>
+  <div class="sechead"><h2>Relatório de chips</h2><span class="muted" style="font-size:12px" id="relCtx"></span></div>
+  <div class="kv" id="rKv"></div>
+  <div class="grid g-eq">
+    <div class="panel span2"><div class="phead"><h3>Movimentações ao longo do período</h3><span class="hint" id="rTimeHint"></span></div><div class="chartbox" style="height:290px"><canvas id="rTime"></canvas><div class="nodata" hidden>Nenhuma movimentação no período.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Movimentações por tipo</h3></div><div class="chartbox"><canvas id="rTipo"></canvas><div class="nodata" hidden>Nenhuma movimentação no período.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Inventário por regional e situação</h3><span class="hint">situação atual</span></div><div class="chartbox"><canvas id="rReg"></canvas><div class="nodata" hidden>Sem chips.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Chips com as equipes</h3><span class="hint">situação atual</span></div><div class="chartbox"><canvas id="rEq"></canvas><div class="nodata" hidden>Nenhum chip com equipes.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Operadoras por situação</h3><span class="hint">situação atual</span></div><div class="chartbox"><canvas id="rOps"></canvas><div class="nodata" hidden>Sem chips ativos.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Instalações por cidade</h3><span class="hint">no período · 10 maiores</span></div><div class="chartbox"><canvas id="rCid"></canvas><div class="nodata" hidden>Nenhuma instalação no período.</div></div></div>
+    <div class="panel"><div class="phead"><h3>Motivos de retirada e remanejamento</h3><span class="hint">no período</span></div><div class="chartbox"><canvas id="rMot"></canvas><div class="nodata" hidden>Nenhuma retirada no período.</div></div></div>
+    <div class="panel span2"><div class="phead"><h3>Locais com problema de sinal</h3><span class="hint">retiradas e remanejamentos por falta de sinal, no período</span></div>
+      <div class="tablebox"><table class="resp"><thead><tr><th>Data</th><th>Regional</th><th>Local de origem</th><th>Operadora</th><th>Destino do chip</th></tr></thead><tbody id="tbSinal"></tbody></table></div></div>
+  </div>
+  <div class="grid g-eq">
+    <div class="panel"><div class="phead"><h3>Resumo para envio</h3></div><pre class="summary" id="rSummary"></pre>
+      <div class="actions" style="margin-top:12px"><button class="btn primary" id="btnCopy" type="button">Copiar resumo</button></div></div>
+    <div class="panel"><div class="phead"><h3>Exportar para Excel</h3></div>
+      <p class="muted" style="margin:0 0 12px;font-size:13px">Os arquivos CSV respeitam os filtros de regional, operadora e período escolhidos no topo e abrem direto no Excel.</p>
+      <div class="actions"><button class="btn" id="btnCsvMovs" type="button">Movimentações (CSV)</button><button class="btn" id="btnCsvChips" type="button">Cadastro de chips (CSV)</button></div></div>
+  </div>
+  <div class="sechead" style="margin-top:22px"><h2>Movimentações do período</h2>
+    <select id="rTipoSel" aria-label="Tipo"><option value="">Todos os tipos</option></select></div>
+  <div class="tablebox"><table class="resp">
+    <thead><tr><th>Data · Tipo</th><th>ICCID</th><th>Operadora</th><th>Regional</th><th>Local / UC</th><th>Equipe</th><th>Documento</th><th>Registrado por</th></tr></thead>
+    <tbody id="tbRel"></tbody>
+  </table></div>
+</section>
+
+<!-- USUÁRIOS -->
+<section id="tab-usuarios" hidden>
+  <div class="sechead"><h2>Usuários</h2><span class="muted" style="font-size:12px">Quem pede cadastro aparece aqui como pendente até ser liberado</span></div>
+  <div class="kv" id="uKv" style="margin-bottom:16px"></div>
+  <div class="tablebox"><table class="resp">
+    <thead><tr><th>Nome</th><th>E-mail</th><th>Acesso</th><th>Desde</th><th>Ações</th></tr></thead>
+    <tbody id="tbUsers"></tbody>
+  </table></div>
+  <div class="foot">Administrador: vê tudo, registra movimentações e libera usuários. Leitor: vê painéis e relatórios, sem alterar nada. Bloqueado: não entra no app.</div>
+</section>
+</main>
+</div>
+
+<button class="fab" id="fab" type="button" aria-label="Nova movimentação"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+</div>
+
+<datalist id="dlOp"></datalist>
+<datalist id="dlCid"></datalist>
+<datalist id="dlEq"></datalist>
+<datalist id="dlMot"></datalist>
+
+<dialog id="dlgMov">
+  <form id="fMov" method="dialog">
+    <div class="dhead"><h2>Nova movimentação</h2><button class="btn small" type="button" data-close>Fechar</button></div>
+    <div class="dbody">
+      <div class="tipos" id="tipoBtns"></div>
+      <div class="formgrid">
+        <label class="f wide">ICCID do(s) chip(s) — um por linha
+          <textarea id="m_iccids" rows="3" class="mono" required autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+          <span class="hint" id="iccidHint"></span>
+        </label>
+        <label class="f">Data<input type="date" id="m_data" required></label>
+        <label class="f" data-fld="regional"><span id="regLabel">Regional</span><select id="m_regional"></select></label>
+        <label class="f" data-fld="linha">Linha (número)<input id="m_linha" inputmode="tel" placeholder="(64) 9 9999-0000"></label>
+        <label class="f" data-fld="operadora">Operadora<input id="m_operadora" list="dlOp" placeholder="Vivo, Claro, TIM…"></label>
+        <label class="f" data-fld="apn">APN / plano<input id="m_apn" placeholder="APN privada, plano M2M…"></label>
+        <label class="f" data-fld="uc"><span class="lt" data-base="UC / instalação">UC / instalação</span><input id="m_uc" inputmode="numeric" placeholder="Nº da UC"></label>
+        <label class="f" data-fld="remota"><span class="lt" data-base="Remota / medidor (nº série)">Remota / medidor (nº série)</span><input id="m_remota"></label>
+        <label class="f" data-fld="cidade"><span class="lt" data-base="Cidade">Cidade</span><input id="m_cidade" list="dlCid"></label>
+        <label class="f" data-fld="equipe">Equipe / responsável<input id="m_equipe" list="dlEq"></label>
+        <label class="f" data-fld="ns"><span id="nsLabel">Documento</span><input id="m_ns"></label>
+        <label class="f" data-fld="motivo">Motivo<input id="m_motivo" list="dlMot"></label>
+        <label class="f wide" data-fld="obs">Observação<textarea id="m_obs" rows="2"></textarea></label>
+        <label class="check wide"><input type="checkbox" id="m_force"> Ignorar validação de situação (usar só para corrigir cadastro)</label>
+      </div>
+      <div class="result" id="mResult" hidden></div>
+    </div>
+    <div class="dfoot">
+      <button class="btn" type="button" data-close>Cancelar</button>
+      <button class="btn primary" type="submit" id="btnSalvarMov">Registrar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlgChip">
+  <div class="dhead"><h2 class="mono" id="cTitle" style="font-size:16px"></h2><button class="btn small" type="button" data-close>Fechar</button></div>
+  <div class="dbody" id="cBody"></div>
+</dialog>
+
+<div class="toast" id="toast" hidden></div>
+</body>
+</html>
